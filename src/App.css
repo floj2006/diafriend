@@ -372,6 +372,18 @@ button {
   box-shadow: 0 16px 24px rgba(154, 97, 216, 0.18);
 }
 
+.card-choice:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.card-choice:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
 .card-choice strong,
 .mini-item span,
 .slot-content strong {

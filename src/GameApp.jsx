@@ -476,11 +476,21 @@ export default function GameApp() {
   };
 
   const goNextScene = () => {
-    if (typeof pendingGlucose === 'number') {
+    const nextIndex = Math.min(sceneIndex + 1, SCENES.length - 1);
+    const nextSceneId = SCENES[nextIndex]?.id;
+
+    if (nextSceneId === 'playground' && !sceneDone.playground) {
+      setPendingGlucose(null);
+      setGlucose(playgroundVariant.start);
+    } else if (nextSceneId === 'evening' && !sceneDone.evening) {
+      setPendingGlucose(null);
+      setGlucose(eveningVariant.glucose);
+    } else if (typeof pendingGlucose === 'number') {
       setGlucose(pendingGlucose);
       setPendingGlucose(null);
     }
-    setSceneIndex((prev) => Math.min(prev + 1, SCENES.length - 1));
+
+    setSceneIndex(nextIndex);
   };
 
   const resetStory = () => {
@@ -698,15 +708,15 @@ export default function GameApp() {
 
   const selectPlaygroundAction = (actionId) => {
     if (sceneDone.playground) return;
+    if (playgroundSelection && playgroundSelection !== actionId) return;
 
     const action = PLAYGROUND_ACTIONS.find((entry) => entry.id === actionId);
     if (!action) return;
 
     setPlaygroundSelection(actionId);
     setPlaygroundReady(true);
-    setPlaygroundLog((prev) => [...prev, actionId]);
-    setGlucose(clamp(playgroundVariant.start + action.delta, 2, 10));
-    setCoachLine(`Глюкоша: ${action.note}`);
+    setPlaygroundLog((prev) => (prev[prev.length - 1] === actionId ? prev : [...prev, actionId]));
+    setCoachLine(`Глюкоша: Выбрали «${action.label.toLowerCase()}». Теперь посмотрим, что будет с сахаром крови.`);
   };
 
   const dropPlaygroundAction = () => {
@@ -721,7 +731,7 @@ export default function GameApp() {
     setPlaygroundReady(false);
     setPlaygroundLog([]);
     setGlucose(playgroundVariant.start);
-    setCoachLine('Глюкоша: Давай выберем, что делаем сейчас.');
+    setCoachLine('Глюкоша: Давай выберем один вариант помощи.');
   };
 
   const recheckPlayground = () => {
@@ -751,7 +761,6 @@ export default function GameApp() {
 
     setPlaygroundSelection(null);
     setPlaygroundReady(false);
-    setGlucose(playgroundVariant.start);
     setCoachLine(
       playgroundSelection === 'water'
         ? 'Глюкоша: Вода не поднимет сахар крови. Давай выберем сок или что-то сладкое.'
@@ -1066,6 +1075,7 @@ export default function GameApp() {
 
   const renderPlaygroundScene = () => {
     const selectedAction = PLAYGROUND_ACTIONS.find((entry) => entry.id === playgroundSelection);
+    const actionLocked = Boolean(selectedAction) && !sceneDone.playground;
 
     return (
       <div className="scene-play">
@@ -1083,21 +1093,26 @@ export default function GameApp() {
           <div className="panel">
             <h3>Что можно сделать</h3>
             <div className="bank-grid action-bank">
-              {PLAYGROUND_ACTIONS.map((action) => (
-                <button
-                  key={action.id}
-                  type="button"
-                  className={`card-choice ${playgroundSelection === action.id ? 'active' : ''}`}
-                  draggable={!sceneDone.playground}
-                  onDragStart={() => startDrag({ scene: 'playground', id: action.id })}
-                  onDragEnd={stopDrag}
-                  onClick={() => selectPlaygroundAction(action.id)}
-                >
-                  <ChoiceArt src={action.icon} emoji={action.emoji} label={action.label} artKey={action.artKey} variant="card" />
-                  <strong>{action.label}</strong>
-                  <small>{action.note}</small>
-                </button>
-              ))}
+              {PLAYGROUND_ACTIONS.map((action) => {
+                const disabled = actionLocked && playgroundSelection !== action.id;
+
+                return (
+                  <button
+                    key={action.id}
+                    type="button"
+                    className={`card-choice ${playgroundSelection === action.id ? 'active' : ''}`}
+                    draggable={!sceneDone.playground && !disabled}
+                    disabled={disabled}
+                    onDragStart={() => startDrag({ scene: 'playground', id: action.id })}
+                    onDragEnd={stopDrag}
+                    onClick={() => selectPlaygroundAction(action.id)}
+                  >
+                    <ChoiceArt src={action.icon} emoji={action.emoji} label={action.label} artKey={action.artKey} variant="card" />
+                    <strong>{action.label}</strong>
+                    <small>{action.note}</small>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -1106,7 +1121,13 @@ export default function GameApp() {
             <div className={`status-card ${sugarState}`}>
               <div className={`status-badge ${sugarState}`}>{sugarState === 'low' ? 'Низкий сахар' : sugarState === 'high' ? 'Высокий сахар' : 'Сахар в норме'}</div>
               <strong>{glucose.toFixed(1)} ммоль/л</strong>
-              <span>{sugarState === 'low' ? 'Сначала поднимаем сахар крови.' : 'Уже лучше. Можно проверить снова.'}</span>
+              <span>
+                {selectedAction
+                  ? 'Один вариант уже выбран. Теперь смотрим сахар снова или выбираем другой вариант.'
+                  : sugarState === 'low'
+                    ? 'Сначала выбираем один способ помочь себе.'
+                    : 'Уже лучше. Можно посмотреть сахар снова.'}
+              </span>
             </div>
 
             <div
@@ -1131,8 +1152,14 @@ export default function GameApp() {
               )}
             </div>
 
+            <div className="soft-note">
+              {selectedAction
+                ? 'Сейчас выбран один вариант помощи. Чтобы попробовать другой, нажми кнопку ниже.'
+                : 'Выбери один вариант помощи, а потом нажми «Смотрим сахар снова».'}
+            </div>
+
             <div className="button-row">
-              <button type="button" className="ink-button soft" onClick={resetPlayground}>Собрать заново</button>
+              <button type="button" className="ink-button soft" onClick={resetPlayground}>{selectedAction ? 'Выбрать другой вариант' : 'Собрать заново'}</button>
               <button type="button" className="accent-button" onClick={recheckPlayground} disabled={!playgroundReady}>Смотрим сахар снова</button>
             </div>
           </div>
