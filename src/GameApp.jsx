@@ -324,6 +324,7 @@ export default function GameApp() {
   const [glucose, setGlucose] = useState(typeof saved?.glucose === 'number' ? saved.glucose : 5.6);
   const [knowledge, setKnowledge] = useState(typeof saved?.knowledge === 'number' ? saved.knowledge : 0);
   const [stickers, setStickers] = useState(typeof saved?.stickers === 'number' ? saved.stickers : 0);
+  const [pendingGlucose, setPendingGlucose] = useState(typeof saved?.pendingGlucose === 'number' ? saved.pendingGlucose : null);
   const [introAnswer, setIntroAnswer] = useState(saved?.introAnswer ?? null);
   const [coachLine, setCoachLine] = useState('');
   const [modalData, setModalData] = useState(null);
@@ -370,7 +371,7 @@ export default function GameApp() {
   useEffect(() => {
     const openers = {
       intro: 'Привет! Я Глюкоша. Со мной можно спокойно тренироваться и узнавать новое про сахар крови.',
-      breakfast: 'Лада рядом. Перетащи еду на стол или просто нажимай на карточки.',
+      breakfast: 'Лада рядом. Сначала спокойно собираем завтрак, а потом смотрим, как он может повлиять на сахар крови.',
       school: 'Тима рядом. Собираем рюкзачок так, чтобы в школе было спокойнее.',
       playground: `${playgroundVariant.title} ${playgroundVariant.helper}`,
       evening: `${eveningVariant.title} ${eveningVariant.helper}`,
@@ -395,6 +396,7 @@ export default function GameApp() {
       sceneIndex,
       storySeed,
       glucose,
+      pendingGlucose,
       knowledge,
       stickers,
       introAnswer,
@@ -412,6 +414,7 @@ export default function GameApp() {
     window.render_game_to_text = () => JSON.stringify({
       scene: currentScene.id,
       glucose: Number(glucose.toFixed(1)),
+      pendingGlucose,
       knowledge,
       stickers,
       introAnswer,
@@ -427,6 +430,7 @@ export default function GameApp() {
     sceneIndex,
     storySeed,
     glucose,
+    pendingGlucose,
     knowledge,
     stickers,
     introAnswer,
@@ -466,12 +470,16 @@ export default function GameApp() {
     setSceneNotes((prev) => ({ ...prev, [sceneId]: note }));
     setKnowledge((prev) => prev + addKnowledge);
     setStickers((prev) => prev + addSticker);
-    setGlucose(clamp(nextGlucose, 2, 10));
+    setPendingGlucose(clamp(nextGlucose, 2, 10));
     setCoachLine(note);
     openModal(currentScene.mascot, `${currentMascot.name} говорит`, body);
   };
 
   const goNextScene = () => {
+    if (typeof pendingGlucose === 'number') {
+      setGlucose(pendingGlucose);
+      setPendingGlucose(null);
+    }
     setSceneIndex((prev) => Math.min(prev + 1, SCENES.length - 1));
   };
 
@@ -480,6 +488,7 @@ export default function GameApp() {
     setSceneIndex(0);
     setStorySeed(nextSeed);
     setGlucose(5.6);
+    setPendingGlucose(null);
     setKnowledge(0);
     setStickers(0);
     setIntroAnswer(null);
@@ -602,7 +611,7 @@ export default function GameApp() {
     if (hasSweetDrink || hasSweetPastry) {
       finishScene('breakfast', {
         note: 'Тут много сладкого, поэтому сахар крови может подняться слишком быстро.',
-        body: `Лада мягко говорит: «Сейчас на столе ${formatBreadUnits(breakfastUnits)}. В следующий раз можно взять менее сладкий завтрак».`,
+        body: `Лада мягко говорит: «Сейчас на столе ${formatBreadUnits(breakfastUnits)}. На следующем шаге мы увидим, что после такого завтрака сахар крови может подняться выше».`,
         addKnowledge: 1,
         addSticker: 0,
         nextGlucose: 8.1,
@@ -612,7 +621,7 @@ export default function GameApp() {
 
     finishScene('breakfast', {
       note: 'Такой завтрак неплохой, но можно еще спокойнее подобрать еду и напиток.',
-      body: `Лада говорит: «Сейчас получилось ${formatBreadUnits(breakfastUnits)}. Уже хорошо, и мы можем сделать еще лучше».`,
+      body: `Лада говорит: «Сейчас получилось ${formatBreadUnits(breakfastUnits)}. На следующем шаге посмотрим, какой станет сахар крови после такого завтрака».`,
       addKnowledge: 1,
       addSticker: 0,
       nextGlucose: 6.7,

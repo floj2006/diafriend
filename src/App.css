@@ -18,6 +18,7 @@
   --orange: #ffb14a;
   --orange-deep: #ff8348;
   --shadow: 0 20px 40px rgba(59, 54, 88, 0.1);
+  --display-font: 'Baloo 2', 'Trebuchet MS', 'Arial Rounded MT Bold', 'Segoe UI', sans-serif;
 }
 
 * {
@@ -61,7 +62,7 @@ button {
 }
 
 .brand {
-  font-family: 'Baloo 2', cursive;
+  font-family: var(--display-font);
   font-size: 50px;
   line-height: 0.88;
   color: #315fb1;
@@ -190,7 +191,7 @@ button {
 
 .scene-card h1 {
   margin: 10px 0 6px;
-  font-family: 'Baloo 2', cursive;
+  font-family: var(--display-font);
   font-size: 40px;
   line-height: 0.95;
 }
@@ -255,7 +256,7 @@ button {
 
 .speech-cloud h2 {
   margin: 8px 0 4px;
-  font-family: 'Baloo 2', cursive;
+  font-family: var(--display-font);
   font-size: 30px;
   line-height: 0.95;
 }
@@ -317,7 +318,7 @@ button {
 
 .panel h3 {
   margin: 0 0 10px;
-  font-family: 'Baloo 2', cursive;
+  font-family: var(--display-font);
   font-size: 24px;
   line-height: 0.95;
 }
@@ -433,7 +434,7 @@ button {
 }
 
 .slot-label {
-  font-family: 'Baloo 2', cursive;
+  font-family: var(--display-font);
   font-size: 21px;
   line-height: 0.95;
 }
@@ -513,7 +514,7 @@ button {
 .bag-title {
   margin: 0 0 10px;
   max-width: 72%;
-  font-family: 'Baloo 2', cursive;
+  font-family: var(--display-font);
   font-size: 20px;
   line-height: 1.08;
 }
@@ -884,7 +885,7 @@ button {
 }
 
 .panel-title {
-  font-family: 'Baloo 2', cursive;
+  font-family: var(--display-font);
   font-size: 22px;
   line-height: 0.95;
 }
@@ -1240,6 +1241,11 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .scene-card.scene-school .play-grid,
+  .scene-card.scene-evening .play-grid {
+    grid-template-columns: 1fr;
+  }
+
   .hero-row,
   .hero-row.compact-row,
   .intro-hero,
@@ -1258,6 +1264,14 @@ button {
     padding: 14px;
   }
 
+  .brand {
+    font-size: 40px;
+  }
+
+  .brand-sub {
+    font-size: 14px;
+  }
+
   .scene-card,
   .panel,
   .meter-card,
@@ -1266,16 +1280,157 @@ button {
   }
 
   .scene-card h1 {
-    font-size: 40px;
+    font-size: 34px;
+  }
+
+  .scene-sub {
+    font-size: 15px;
+    margin-bottom: 10px;
   }
 
   .panel h3,
   .panel-title {
-    font-size: 28px;
+    font-size: 22px;
   }
 
   .bank-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .scene-card.scene-school .bank-grid,
+  .scene-card.scene-playground .bank-grid,
+  .scene-card.scene-evening .bank-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .play-grid,
+  .scene-card.scene-school .play-grid,
+  .scene-card.scene-evening .play-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-row,
+  .hero-row.compact-row,
+  .intro-hero {
+    gap: 10px;
+  }
+
+  .mascot-illustration,
+  .mascot-illustration.large {
+    justify-self: center;
+  }
+
+  .speech-cloud {
+    width: 100%;
+    padding: 28px 16px 16px 18px;
+    border-width: 5px;
+    border-radius: 28px;
+  }
+
+  .speech-cloud::before {
+    left: -8px;
+    top: 46px;
+    width: 18px;
+    height: 18px;
+    border-left-width: 5px;
+    border-bottom-width: 5px;
+  }
+
+  .speech-cloud p {
+    font-size: 15px;
+    line-height: 1.4;
+  }
+
+  .bubble-label {
+    top: -14px;
+    left: 14px;
+    padding: 7px 12px;
+    font-size: 13px;
+  }
+
+  .coach-strip,
+  .soft-note,
+  .scenario-banner {
+    font-size: 15px;
+    padding: 10px 12px;
+  }
+
+  .scene-chip {
+    padding: 6px 12px;
+    font-size: 15px;
+  }
+
+  .card-choice {
+    min-height: 126px;
+    padding: 8px;
+  }
+
+  .card-choice strong {
+    min-height: 2.1em;
+    font-size: 13px;
+    line-height: 1.15;
+  }
+
+  .card-choice small {
+    font-size: 12px;
+    line-height: 1.25;
+  }
+
+  .choice-art.card {
+    --choice-size: 54px;
+  }
+
+  .choice-art.compact {
+    --choice-size: 38px;
+  }
+
+  .scene-card.scene-school .card-choice,
+  .scene-card.scene-playground .card-choice,
+  .scene-card.scene-evening .card-choice {
+    min-height: 132px;
+  }
+
+  .scene-card.scene-school .card-choice strong,
+  .scene-card.scene-playground .card-choice strong,
+  .scene-card.scene-evening .card-choice strong {
+    font-size: 12px;
+  }
+
+  .scene-card.scene-school .choice-art.card,
+  .scene-card.scene-playground .choice-art.card,
+  .scene-card.scene-evening .choice-art.card {
+    --choice-size: 50px;
+  }
+
+  .backpack-dropzone {
+    min-height: 190px;
+    padding: 60px 14px 14px;
+  }
+
+  .bag-title,
+  .backpack-dropzone .slot-empty {
+    max-width: none;
+  }
+
+  .scene-card.scene-school .item-list {
+    grid-template-columns: 1fr;
+  }
+
+  .scene-card.scene-school .mini-item span {
+    font-size: 12px;
+  }
+
+  .branch-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .step-slot {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .step-slot .slot-remove {
+    grid-column: 2;
+    justify-self: start;
   }
 
   .choice-row.huge {
@@ -1289,5 +1444,9 @@ button {
 
   .meter-card {
     grid-template-columns: 1fr;
+  }
+
+  .next-button {
+    position: static;
   }
 }
