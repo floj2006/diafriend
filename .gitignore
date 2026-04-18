@@ -1,0 +1,11 @@
+﻿node_modules/
+dist/
+output/
+test-results/
+*.log
+progress.md
+tmp-*.mjs
+tmp-*.json
+tmp_*.txt
+tmp_unicode.txt
+output-*.png
