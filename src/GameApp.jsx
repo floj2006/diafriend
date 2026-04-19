@@ -747,9 +747,10 @@ export default function GameApp() {
     if (!action) return;
 
     setPlaygroundSelection(actionId);
-    setPlaygroundReady(true);
+    setPlaygroundReady(false);
     setPlaygroundLog((prev) => (prev[prev.length - 1] === actionId ? prev : [...prev, actionId]));
-    setCoachLine('Глюкоша: Один вариант уже выбран. Теперь смотрим сахар снова.');
+    setCoachLine('Глюкоша: Сейчас посмотрим, что стало с сахаром крови.');
+    resolvePlaygroundSelection(actionId);
   };
 
   const dropPlaygroundAction = () => {
@@ -767,10 +768,10 @@ export default function GameApp() {
     setCoachLine(sceneDone.playground ? 'Глюкоша: Можно попробовать другой вариант. Выбери одно действие.' : 'Глюкоша: Давай выберем один вариант помощи.');
   };
 
-  const recheckPlayground = () => {
-    if (!playgroundSelection || !playgroundReady) return;
+  const resolvePlaygroundSelection = (selectedId = playgroundSelection) => {
+    if (!selectedId) return;
 
-    if (playgroundSelection === 'juice') {
+    if (selectedId === 'juice') {
       if (sceneDone.playground || playgroundPractice) {
         setGlucose(5.1);
         setPlaygroundReady(false);
@@ -787,7 +788,7 @@ export default function GameApp() {
       return;
     }
 
-    if (playgroundSelection === 'cookie') {
+    if (selectedId === 'cookie') {
       if (sceneDone.playground || playgroundPractice) {
         setGlucose(4.4);
         setPlaygroundReady(false);
@@ -807,7 +808,7 @@ export default function GameApp() {
     setPlaygroundSelection(null);
     setPlaygroundReady(false);
     setCoachLine(
-      playgroundSelection === 'water'
+      selectedId === 'water'
         ? 'Глюкоша: Вода не поднимет сахар крови. Давай выберем сок или что-то сладкое.'
         : 'Глюкоша: Если сахар низкий, сначала помогаем себе, а не бежим дальше.',
     );
@@ -1226,15 +1227,14 @@ export default function GameApp() {
 
             <div className="soft-note">
               {selectedAction
-                ? 'Сейчас выбран один вариант помощи. Чтобы попробовать другой, нажми кнопку ниже.'
-                : 'Выбери один вариант помощи, а потом нажми «Смотрим сахар снова».'}
+                ? 'Мы уже посмотрели, как этот вариант помогает. Если хочешь сравнить, можно выбрать другой.'
+                : 'Выбери один вариант помощи. После выбора сразу увидим, что стало с сахаром крови.'}
             </div>
 
             <div className="button-row">
               {selectedAction || sceneDone.playground ? (
                 <button type="button" className="ink-button soft" onClick={resetPlayground}>Выбрать другой вариант</button>
               ) : null}
-              <button type="button" className="accent-button" onClick={recheckPlayground} disabled={!playgroundReady}>Смотрим сахар снова</button>
             </div>
           </div>
         </div>
@@ -1434,12 +1434,8 @@ export default function GameApp() {
                   <div className="slot-label">Смотрим снова</div>
                   <div className="slot-helper">Смотрим, как изменился сахар крови</div>
                 </div>
-                <div className="slot-empty">Нажми на кнопку ниже или перетащи карточку, когда шаг 3 готов</div>
+                <div className="slot-empty">Нажми на карточку «Смотрим снова» или перетащи ее сюда, когда шаг 3 готов</div>
               </div>
-            </div>
-
-            <div className="button-row">
-              <button type="button" className="accent-button" onClick={() => placeEveningToken({ type: 'recheck', id: 'recheck' })} disabled={!canFinishEvening}>Смотрим сахар снова</button>
             </div>
           </div>
         </div>
