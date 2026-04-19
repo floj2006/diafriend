@@ -27,6 +27,13 @@ const SCENES = [
   { id: 'finale', chapter: 'Финал', title: 'Мои новые умения', mascot: 'meter' },
 ];
 
+const IMPROVEMENT_POINTS = [
+  'История измерений и графики динамики.',
+  'Напоминания о замерах, еде и введении инсулина по плану врача.',
+  'Интеграция с глюкометрами и экспорт данных для семьи.',
+  'Персонализация под вид диабета и схему терапии.',
+];
+
 const INTRO_CHOICES = [
   { id: 'yes', label: 'да', emoji: '👍', icon: '' },
   { id: 'no', label: 'нет', emoji: '🙂', icon: '' },
@@ -51,7 +58,7 @@ const BACKPACK_ITEMS = [
   { id: 'meter', label: 'Глюкометр', emoji: '🩵', good: true, icon: '/assets/icons/choices/school/meter.png', artKey: 'school.meter' },
   { id: 'juice', label: 'Сок на случай низкого сахара', emoji: '🧃', good: true, icon: '/assets/icons/choices/school/juice.png', artKey: 'school.juice' },
   { id: 'water', label: 'Вода', emoji: '💧', good: true, icon: '/assets/icons/choices/school/water.png', artKey: 'school.water' },
-  { id: 'phone', label: 'Телефон мамы или папы', emoji: '📱', good: true, icon: '/assets/icons/choices/school/phone.png', artKey: 'school.phone' },
+  { id: 'phone', label: 'Телефон родителей', emoji: '📱', good: true, icon: '/assets/icons/choices/school/phone.png', artKey: 'school.phone' },
   { id: 'chips', label: 'Чипсы', emoji: '🍟', good: false, icon: '/assets/icons/choices/school/chips.png', artKey: 'school.chips' },
   { id: 'toy', label: 'Игрушка', emoji: '🧸', good: false, icon: '/assets/icons/choices/school/toy.png', artKey: 'school.toy' },
 ];
@@ -186,7 +193,7 @@ const SCENE_TIPS = {
   school: [
     'Глюкометр помогает вовремя посмотреть сахар крови.',
     'Сок нужен на случай низкого сахара.',
-    'Телефон взрослых помогает быстро позвать на помощь.',
+    'Телефон родителей помогает быстро связаться со взрослым.',
   ],
   playground: [
     'Низкий сахар крови часто поднимают быстрые углеводы.',
@@ -328,6 +335,8 @@ export default function GameApp() {
   const [introAnswer, setIntroAnswer] = useState(saved?.introAnswer ?? null);
   const [coachLine, setCoachLine] = useState('');
   const [modalData, setModalData] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuView, setMenuView] = useState('about');
   const [dragPayload, setDragPayload] = useState(null);
   const [dragTarget, setDragTarget] = useState('');
   const [sceneDone, setSceneDone] = useState(saved?.sceneDone ?? {
@@ -343,6 +352,7 @@ export default function GameApp() {
   const [playgroundSelection, setPlaygroundSelection] = useState(saved?.playgroundSelection ?? null);
   const [playgroundLog, setPlaygroundLog] = useState(saved?.playgroundLog ?? []);
   const [playgroundReady, setPlaygroundReady] = useState(saved?.playgroundReady ?? false);
+  const [playgroundPractice, setPlaygroundPractice] = useState(saved?.playgroundPractice ?? false);
   const [eveningBoard, setEveningBoard] = useState(saved?.eveningBoard ?? {
     measure: false,
     state: null,
@@ -407,6 +417,7 @@ export default function GameApp() {
       playgroundSelection,
       playgroundLog,
       playgroundReady,
+      playgroundPractice,
       eveningBoard,
     };
 
@@ -423,6 +434,7 @@ export default function GameApp() {
       playgroundSelection,
       playgroundLog,
       playgroundReady,
+      playgroundPractice,
       eveningBoard,
       sceneDone,
     });
@@ -441,6 +453,7 @@ export default function GameApp() {
     playgroundSelection,
     playgroundLog,
     playgroundReady,
+    playgroundPractice,
     eveningBoard,
     currentScene.id,
   ]);
@@ -504,6 +517,8 @@ export default function GameApp() {
     setIntroAnswer(null);
     setCoachLine('');
     setModalData(null);
+    setMenuOpen(false);
+    setMenuView('about');
     setDragPayload(null);
     setDragTarget('');
     setSceneDone({ intro: false, breakfast: false, school: false, playground: false, evening: false });
@@ -513,6 +528,7 @@ export default function GameApp() {
     setPlaygroundSelection(null);
     setPlaygroundLog([]);
     setPlaygroundReady(false);
+    setPlaygroundPractice(false);
     setEveningBoard({ measure: false, state: null, action: null, recheck: false });
 
     if (typeof window !== 'undefined') {
@@ -521,6 +537,16 @@ export default function GameApp() {
   };
 
   const closeModal = () => setModalData(null);
+
+  const closeMenu = () => setMenuOpen(false);
+
+  const jumpToScene = (targetId) => {
+    const nextIndex = SCENES.findIndex((scene) => scene.id === targetId);
+    if (nextIndex === -1) return;
+
+    setSceneIndex(nextIndex);
+    setMenuOpen(false);
+  };
 
   const answerIntro = (answer) => {
     setIntroAnswer(answer);
@@ -648,7 +674,7 @@ export default function GameApp() {
       return exists ? prev.filter((id) => id !== itemId) : [...prev, itemId];
     });
 
-    setCoachLine(backpack.includes(itemId) ? 'Тима: Убрали эту вещь. Собираем дальше.' : `Тима: Готово. «${item.label}» теперь в рюкзачке.`);
+    setCoachLine(backpack.includes(itemId) ? 'Тима: Убрали эту вещь. Собираем дальше.' : 'Тима: Готово. Полезная вещь уже в рюкзачке.');
   };
 
   const addBackpackItem = (itemId) => {
@@ -657,7 +683,7 @@ export default function GameApp() {
     if (!item) return;
 
     setBackpack((prev) => (prev.includes(itemId) ? prev : [...prev, itemId]));
-    setCoachLine(`Тима: «${item.label}» уже внутри. Собираем дальше.`);
+    setCoachLine(item.good ? 'Тима: Эта вещь уже внутри. Собираем дальше.' : 'Тима: Эту вещь можно взять, но для школы она не самая важная.');
   };
 
   const dropBackpackItem = () => {
@@ -687,27 +713,25 @@ export default function GameApp() {
     }
 
     if (missing.length === 0) {
-      const extraNames = extras.map((id) => BACKPACK_ITEMS.find((item) => item.id === id)?.label.toLowerCase()).join(', ');
       finishScene('school', {
         note: 'Главные вещи уже взяты. Лишние вещи можно не брать: они не помогают следить за сахаром крови.',
-        body: `Тима говорит: «Самое важное уже в рюкзачке. А ${extraNames} можно оставить дома».`,
+        body: 'Тима говорит: «Самое важное уже в рюкзачке. Лишние вещи можно оставить дома».',
         addKnowledge: 1,
         addSticker: 0,
       });
       return;
     }
 
-    const missingNames = missing.map((id) => BACKPACK_ITEMS.find((item) => item.id === id)?.label.toLowerCase()).join(', ');
     finishScene('school', {
       note: 'В рюкзачке лучше держать глюкометр, сок, воду и телефон взрослых.',
-      body: `Тима подсказывает: «Нам еще нужны ${missingNames}. Эти вещи правда помогают в школе».`,
+      body: 'Тима подсказывает: «Пока не все готово. Нам еще нужны вещи, которые помогают в школе следить за сахаром крови».',
       addKnowledge: 1,
       addSticker: 0,
     });
   };
 
   const selectPlaygroundAction = (actionId) => {
-    if (sceneDone.playground) return;
+    if (sceneDone.playground && !playgroundPractice) return;
     if (playgroundSelection && playgroundSelection !== actionId) return;
 
     const action = PLAYGROUND_ACTIONS.find((entry) => entry.id === actionId);
@@ -716,7 +740,7 @@ export default function GameApp() {
     setPlaygroundSelection(actionId);
     setPlaygroundReady(true);
     setPlaygroundLog((prev) => (prev[prev.length - 1] === actionId ? prev : [...prev, actionId]));
-    setCoachLine(`Глюкоша: Выбрали «${action.label.toLowerCase()}». Теперь посмотрим, что будет с сахаром крови.`);
+    setCoachLine('Глюкоша: Один вариант уже выбран. Теперь смотрим сахар снова.');
   };
 
   const dropPlaygroundAction = () => {
@@ -726,18 +750,24 @@ export default function GameApp() {
   };
 
   const resetPlayground = () => {
-    if (sceneDone.playground) return;
     setPlaygroundSelection(null);
     setPlaygroundReady(false);
     setPlaygroundLog([]);
+    setPlaygroundPractice(Boolean(sceneDone.playground));
     setGlucose(playgroundVariant.start);
-    setCoachLine('Глюкоша: Давай выберем один вариант помощи.');
+    setCoachLine(sceneDone.playground ? 'Глюкоша: Можно попробовать другой вариант. Выбери одно действие.' : 'Глюкоша: Давай выберем один вариант помощи.');
   };
 
   const recheckPlayground = () => {
     if (!playgroundSelection || !playgroundReady) return;
 
     if (playgroundSelection === 'juice') {
+      if (sceneDone.playground || playgroundPractice) {
+        setGlucose(5.1);
+        setPlaygroundReady(false);
+        setCoachLine('Глюкоша: После сока сахар крови поднялся быстрее. Если хочешь, можно сравнить с другим вариантом.');
+        return;
+      }
       finishScene('playground', {
         note: 'Если сахар крови низкий, быстрые углеводы вроде сока часто помогают быстрее.',
         body: 'Глюкоша улыбается: «Сахар крови поднялся. Теперь уже спокойнее».',
@@ -749,6 +779,12 @@ export default function GameApp() {
     }
 
     if (playgroundSelection === 'cookie') {
+      if (sceneDone.playground || playgroundPractice) {
+        setGlucose(4.4);
+        setPlaygroundReady(false);
+        setCoachLine('Глюкоша: Печенье тоже помогает, но медленнее. Если хочешь, можно выбрать другой вариант.');
+        return;
+      }
       finishScene('playground', {
         note: 'Печенье тоже помогает, но сахар крови поднимается не так быстро, как от сока.',
         body: 'Глюкоша говорит: «Так тоже можно помочь. Просто сок часто работает быстрее».',
@@ -1159,7 +1195,7 @@ export default function GameApp() {
             </div>
 
             <div className="button-row">
-              <button type="button" className="ink-button soft" onClick={resetPlayground}>{selectedAction ? 'Выбрать другой вариант' : 'Собрать заново'}</button>
+              <button type="button" className="ink-button soft" onClick={resetPlayground}>{selectedAction || sceneDone.playground ? 'Выбрать другой вариант' : 'Собрать заново'}</button>
               <button type="button" className="accent-button" onClick={recheckPlayground} disabled={!playgroundReady}>Смотрим сахар снова</button>
             </div>
           </div>
@@ -1438,14 +1474,89 @@ export default function GameApp() {
             })}
           </div>
 
-          <button type="button" className="ink-button soft" onClick={resetStory}>Сначала</button>
+          <div className="header-actions">
+            <button
+              type="button"
+              className="kebab-button"
+              aria-label="Открыть меню"
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen((prev) => !prev)}
+            >
+              <span />
+              <span />
+              <span />
+            </button>
+
+            {menuOpen ? (
+              <div className="menu-popover">
+                <div className="menu-tabs">
+                  <button
+                    type="button"
+                    className={`menu-tab ${menuView === 'about' ? 'active' : ''}`}
+                    onClick={() => setMenuView('about')}
+                  >
+                    О проекте
+                  </button>
+                  <button
+                    type="button"
+                    className={`menu-tab ${menuView === 'nav' ? 'active' : ''}`}
+                    onClick={() => setMenuView('nav')}
+                  >
+                    Меню
+                  </button>
+                </div>
+
+                {menuView === 'about' ? (
+                  <div className="menu-section">
+                    <div className="menu-title">О проекте</div>
+                    <p className="menu-copy">
+                      Это учебный интерактивный сайт про жизнь с диабетом. Он помогает спокойно потренироваться в знакомых ситуациях: дома, в школе, на прогулке и вечером.
+                    </p>
+                    <div className="menu-note">
+                      Важно: Данный сайт не является медицинским изделием и не предназначен для постановки диагноза или назначения лечения. Всегда консультируйтесь с врачом по вопросам управления диабетом.
+                    </div>
+                    <div className="menu-title">Зоны для улучшения</div>
+                    <ul className="menu-list">
+                      {IMPROVEMENT_POINTS.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : (
+                  <div className="menu-section">
+                    <div className="menu-title">Навигация</div>
+                    <div className="menu-scene-list">
+                      {progressScenes.map((scene, index) => {
+                        const available = index <= sceneIndex || sceneDone[scene.id];
+
+                        return (
+                          <button
+                            key={scene.id}
+                            type="button"
+                            className={`menu-scene-button ${scene.id === currentScene.id ? 'active' : ''}`}
+                            disabled={!available}
+                            onClick={() => jumpToScene(scene.id)}
+                          >
+                            <span>{index + 1}</span>
+                            <strong>{scene.title}</strong>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <button type="button" className="ink-button soft menu-reset" onClick={resetStory}>
+                      Сначала
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : null}
+          </div>
         </header>
 
         <main className="storybook-layout">
           <section className={`scene-card scene-${currentScene.id}`}>
             <div className="scene-topline">
               <span className="scene-chip">{currentScene.chapter}</span>
-              <span className={`scene-chip ${sugarState}`}>Сахар крови: {glucose.toFixed(1)} ммоль/л</span>
             </div>
             <h1>{currentScene.title}</h1>
             <p className="scene-sub">{currentMascot.name} рядом. Здесь можно спокойно пробовать, менять решение и учиться шаг за шагом.</p>
@@ -1457,15 +1568,12 @@ export default function GameApp() {
 
           <aside className="friend-panel">
             <div className="meter-card">
-              <MascotFigure id="meter" />
-              <div>
-                <div className="panel-title">Глюкоша здесь</div>
-                <div className="panel-value">{glucose.toFixed(1)} ммоль/л</div>
-                <div className={`meter-ribbon ${sugarState}`}>
-                  <div className="meter-fill" style={{ width: `${clamp(((glucose - 2) / 8) * 100, 0, 100)}%` }} />
-                </div>
-                <p className="panel-note">{meterMood}</p>
+              <div className="panel-title">Сахар крови</div>
+              <div className="panel-value">{glucose.toFixed(1)} ммоль/л</div>
+              <div className={`meter-ribbon ${sugarState}`}>
+                <div className="meter-fill" style={{ width: `${clamp(((glucose - 2) / 8) * 100, 0, 100)}%` }} />
               </div>
+              <p className="panel-note">{meterMood}</p>
             </div>
 
             <div className="side-card">
@@ -1486,6 +1594,8 @@ export default function GameApp() {
           </aside>
         </main>
       </div>
+
+      {menuOpen ? <button type="button" className="menu-backdrop" aria-label="Закрыть меню" onClick={closeMenu} /> : null}
 
       {modalData ? (
         <div className="mascot-modal-backdrop" onClick={closeModal}>

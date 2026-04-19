@@ -21,7 +21,7 @@ describe('App', () => {
 
   test('shows meter info panel', () => {
     render(<App />);
-    expect(screen.getByText('Глюкоша здесь')).toBeInTheDocument();
+    expect(screen.getByText('Сахар крови')).toBeInTheDocument();
     expect(screen.getByText('5.6 ммоль/л')).toBeInTheDocument();
   });
 
