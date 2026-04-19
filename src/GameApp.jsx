@@ -27,11 +27,10 @@ const SCENES = [
   { id: 'finale', chapter: 'Финал', title: 'Мои новые умения', mascot: 'meter' },
 ];
 
-const IMPROVEMENT_POINTS = [
-  'История измерений и графики динамики.',
-  'Напоминания о замерах, еде и введении инсулина по плану врача.',
-  'Интеграция с глюкометрами и экспорт данных для семьи.',
-  'Персонализация под вид диабета и схему терапии.',
+const INTRO_PREFACE_POINTS = [
+  'Сахар крови — это еда для клеточек твоего тела и энергия для организма.',
+  'Инсулин — добрый ключик, который помогает этой еде попасть внутрь клеточек твоего тела.',
+  'Если ключика нет, сахар остаётся в крови, а клеточкам твоего тела не хватает сил.',
 ];
 
 const INTRO_CHOICES = [
@@ -58,7 +57,7 @@ const BACKPACK_ITEMS = [
   { id: 'meter', label: 'Глюкометр', emoji: '🩵', good: true, icon: '/assets/icons/choices/school/meter.png', artKey: 'school.meter' },
   { id: 'juice', label: 'Сок на случай низкого сахара', emoji: '🧃', good: true, icon: '/assets/icons/choices/school/juice.png', artKey: 'school.juice' },
   { id: 'water', label: 'Вода', emoji: '💧', good: true, icon: '/assets/icons/choices/school/water.png', artKey: 'school.water' },
-  { id: 'phone', label: 'Телефон родителей', emoji: '📱', good: true, icon: '/assets/icons/choices/school/phone.png', artKey: 'school.phone' },
+  { id: 'phone', label: 'Номер телефона родителей', emoji: '📱', good: true, icon: '/assets/icons/choices/school/phone.png', artKey: 'school.phone' },
   { id: 'chips', label: 'Чипсы', emoji: '🍟', good: false, icon: '/assets/icons/choices/school/chips.png', artKey: 'school.chips' },
   { id: 'toy', label: 'Игрушка', emoji: '🧸', good: false, icon: '/assets/icons/choices/school/toy.png', artKey: 'school.toy' },
 ];
@@ -193,7 +192,7 @@ const SCENE_TIPS = {
   school: [
     'Глюкометр помогает вовремя посмотреть сахар крови.',
     'Сок нужен на случай низкого сахара.',
-    'Телефон родителей помогает быстро связаться со взрослым.',
+    'Номер телефона родителей помогает быстро связаться со взрослыми.',
   ],
   playground: [
     'Низкий сахар крови часто поднимают быстрые углеводы.',
@@ -332,6 +331,7 @@ export default function GameApp() {
   const [knowledge, setKnowledge] = useState(typeof saved?.knowledge === 'number' ? saved.knowledge : 0);
   const [stickers, setStickers] = useState(typeof saved?.stickers === 'number' ? saved.stickers : 0);
   const [pendingGlucose, setPendingGlucose] = useState(typeof saved?.pendingGlucose === 'number' ? saved.pendingGlucose : null);
+  const [introStage, setIntroStage] = useState(saved?.introStage ?? 'preface');
   const [introAnswer, setIntroAnswer] = useState(saved?.introAnswer ?? null);
   const [coachLine, setCoachLine] = useState('');
   const [modalData, setModalData] = useState(null);
@@ -407,6 +407,7 @@ export default function GameApp() {
       storySeed,
       glucose,
       pendingGlucose,
+      introStage,
       knowledge,
       stickers,
       introAnswer,
@@ -426,6 +427,7 @@ export default function GameApp() {
       scene: currentScene.id,
       glucose: Number(glucose.toFixed(1)),
       pendingGlucose,
+      introStage,
       knowledge,
       stickers,
       introAnswer,
@@ -443,6 +445,7 @@ export default function GameApp() {
     storySeed,
     glucose,
     pendingGlucose,
+    introStage,
     knowledge,
     stickers,
     introAnswer,
@@ -512,6 +515,7 @@ export default function GameApp() {
     setStorySeed(nextSeed);
     setGlucose(5.6);
     setPendingGlucose(null);
+    setIntroStage('preface');
     setKnowledge(0);
     setStickers(0);
     setIntroAnswer(null);
@@ -553,6 +557,11 @@ export default function GameApp() {
     setSceneDone((prev) => ({ ...prev, intro: true }));
     setKnowledge((prev) => prev + 1);
     setCoachLine(answer === 'yes' ? 'Здорово, тогда идем дальше вместе.' : 'Ничего страшного. Я все равно буду рядом и помогу.');
+  };
+
+  const continueIntroPreface = () => {
+    setIntroStage('invite');
+    setCoachLine('Глюкоша: Теперь давай спокойно потренируемся вместе.');
   };
 
   const startStory = () => {
@@ -723,7 +732,7 @@ export default function GameApp() {
     }
 
     finishScene('school', {
-      note: 'В рюкзачке лучше держать глюкометр, сок, воду и телефон взрослых.',
+      note: 'В рюкзачке лучше держать глюкометр, сок, воду и номер телефона родителей.',
       body: 'Тима подсказывает: «Пока не все готово. Нам еще нужны вещи, которые помогают в школе следить за сахаром крови».',
       addKnowledge: 1,
       addSticker: 0,
@@ -922,29 +931,58 @@ export default function GameApp() {
 
   const renderIntroScene = () => (
     <div className="scene-play intro-play">
-      <div className="hero-row intro-hero">
-        <MascotFigure id="meter" large />
-        <div className="speech-cloud intro-cloud">
-          <div className="bubble-label">Глюкоша говорит</div>
-          <h2>Привет, я Глюкоша</h2>
-          <p>Я показываю сахар крови и помогаю спокойно тренироваться. Хочешь пройти этот день вместе?</p>
-        </div>
-      </div>
+      {introStage === 'preface' ? (
+        <>
+          <div className="hero-row intro-hero">
+            <MascotFigure id="meter" large />
+            <div className="speech-cloud intro-cloud">
+              <div className="bubble-label">Глюкоша объясняет</div>
+              <h2>Как дружат сахар и инсулин</h2>
+              <p>Представь, что клеточки твоего тела — это маленькие домики. Сахар крови — вкусная еда для них. А инсулин — добрый ключик, который открывает дверцу и пускает эту еду внутрь.</p>
+            </div>
+          </div>
 
-      {!introAnswer ? (
-        <div className="choice-row huge">
-          {INTRO_CHOICES.map((choice) => (
-            <button key={choice.id} type="button" className="ink-button intro-choice-button" onClick={() => answerIntro(choice.id)}>
-              <ChoiceArt src={choice.icon} emoji={choice.emoji} label={choice.label} artKey={`intro.${choice.id}`} variant="hero" />
-              <span>{choice.label}</span>
-            </button>
-          ))}
-        </div>
+          <div className="coach-strip">
+            Если ключика не хватает, еда остаётся снаружи: сахар крови растёт, а клеточкам твоего тела не хватает сил для игр, учёбы и роста.
+          </div>
+
+          <div className="lesson-list intro-points">
+            {INTRO_PREFACE_POINTS.map((item) => (
+              <div key={item} className="lesson-pill">{item}</div>
+            ))}
+          </div>
+
+          <div className="button-row">
+            <button type="button" className="accent-button" onClick={continueIntroPreface}>Понятно, идем дальше</button>
+          </div>
+        </>
       ) : (
-        <div className="button-row">
-          <div className="soft-note">{introAnswer === 'yes' ? 'Здорово. Тогда начнем.' : 'Все хорошо. Пойдем маленькими шагами.'}</div>
-          <button type="button" className="accent-button" onClick={startStory}>Начнем</button>
-        </div>
+        <>
+          <div className="hero-row intro-hero">
+            <MascotFigure id="meter" large />
+            <div className="speech-cloud intro-cloud">
+              <div className="bubble-label">Глюкоша говорит</div>
+              <h2>Привет, я Глюкоша</h2>
+              <p>Я показываю сахар крови и помогаю спокойно тренироваться. Хочешь пройти этот день вместе?</p>
+            </div>
+          </div>
+
+          {!introAnswer ? (
+            <div className="choice-row huge">
+              {INTRO_CHOICES.map((choice) => (
+                <button key={choice.id} type="button" className="ink-button intro-choice-button" onClick={() => answerIntro(choice.id)}>
+                  <ChoiceArt src={choice.icon} emoji={choice.emoji} label={choice.label} artKey={`intro.${choice.id}`} variant="hero" />
+                  <span>{choice.label}</span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="button-row">
+              <div className="soft-note">{introAnswer === 'yes' ? 'Здорово. Тогда начнем.' : 'Все хорошо. Пойдем маленькими шагами.'}</div>
+              <button type="button" className="accent-button" onClick={startStory}>Начнем</button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
@@ -1031,7 +1069,6 @@ export default function GameApp() {
           <div className="total-box">Всего: {formatBreadUnits(breakfastUnits)}</div>
 
           <div className="button-row">
-            <button type="button" className="ink-button soft" onClick={resetBreakfast}>Собрать заново</button>
             <button type="button" className="accent-button" onClick={submitBreakfast} disabled={!breakfastItemsOnTable.length}>Показать Ладе</button>
           </div>
         </div>
@@ -1101,7 +1138,6 @@ export default function GameApp() {
           </div>
 
           <div className="button-row">
-            <button type="button" className="ink-button soft" onClick={resetBackpack}>Собрать заново</button>
             <button type="button" className="accent-button" onClick={submitBackpack} disabled={!backpack.length}>Проверить рюкзачок</button>
           </div>
         </div>
@@ -1195,7 +1231,9 @@ export default function GameApp() {
             </div>
 
             <div className="button-row">
-              <button type="button" className="ink-button soft" onClick={resetPlayground}>{selectedAction || sceneDone.playground ? 'Выбрать другой вариант' : 'Собрать заново'}</button>
+              {selectedAction || sceneDone.playground ? (
+                <button type="button" className="ink-button soft" onClick={resetPlayground}>Выбрать другой вариант</button>
+              ) : null}
               <button type="button" className="accent-button" onClick={recheckPlayground} disabled={!playgroundReady}>Смотрим сахар снова</button>
             </div>
           </div>
@@ -1401,7 +1439,6 @@ export default function GameApp() {
             </div>
 
             <div className="button-row">
-              <button type="button" className="ink-button soft" onClick={() => clearEveningFrom('measure')}>Собрать заново</button>
               <button type="button" className="accent-button" onClick={() => placeEveningToken({ type: 'recheck', id: 'recheck' })} disabled={!canFinishEvening}>Смотрим сахар снова</button>
             </div>
           </div>
@@ -1515,12 +1552,9 @@ export default function GameApp() {
                     <div className="menu-note">
                       Важно: Данный сайт не является медицинским изделием и не предназначен для постановки диагноза или назначения лечения. Всегда консультируйтесь с врачом по вопросам управления диабетом.
                     </div>
-                    <div className="menu-title">Зоны для улучшения</div>
-                    <ul className="menu-list">
-                      {IMPROVEMENT_POINTS.map((item) => (
-                        <li key={item}>{item}</li>
-                      ))}
-                    </ul>
+                    <p className="menu-copy">
+                      Здесь мы объясняем важные вещи простым языком и через знакомые ситуации: завтрак, школа, прогулка и вечер.
+                    </p>
                   </div>
                 ) : (
                   <div className="menu-section">
